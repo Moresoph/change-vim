@@ -6,7 +6,7 @@ currentTime="$(date "+%Y-%m-%d:%H:%M:%S")"
 workPath="$HOME/.Moresoph-vim"
 
 fname=$(basename $0)
-scriptName=$(fname%.*)
+scriptName=${fname%.*}
 logFile="${HOME}/.${scriptName}.log"
 
 vimrcfile="~/.vimrc"
