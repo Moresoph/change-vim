@@ -171,7 +171,7 @@ function createSymLinks()
 
 # Step 5:Sync Vundle plug-in
 vundleUri="https://github.com/gmarik/vundle.git"
-vundlePath="$HOME/.vim/bundle/vundle"
+vundlePath="$HOME/.vim/bundle/Vundle.vim"
 
 # Step 6:Using Vundle plug-in management
 setupWithVundle()
