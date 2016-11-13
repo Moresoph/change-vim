@@ -121,7 +121,7 @@ function doBackUp()
     if [[ -e "$1" || -e "$2" ]]; then
         myPrintInfo "Attempting to back up your original vim configuration"
         local ret="0"
-        for i in "$1" "$2" "$3"; do
+        for i in "$1" "$2"; do
             [[ -e "$i" ]] && mv -v "$i" "${i}.${currentTime}" || local ret="1" 
             [[ "${ret}" == "1" ]] && myPrintError "Failed back up ${1}" 
         done
@@ -176,7 +176,7 @@ vundleUri="https://github.com/gmarik/vundle.git"
 vundlePath="$HOME/.vim/bundle/vundle"
 
 # Step 6:Using Vundle plug-in management
-setupVundle()
+setupWithVundle()
 {
     local system_shell="${SHELL}"
     export SHELL='/bin/sh'
@@ -204,7 +204,8 @@ currentstep=0
 function promptStepInfo()
 {   
     ((currentstep++))
-    local strenter="Step ${currentstep} : $1"
+    local str=$(echo $1 |cut -d " " -f1)
+    local strenter="Step ${currentstep} : ${str}"
     myPrintEnterLeave "${strenter}"
     $1
     myPrintEnterLeave "Step ${currentstep} : Finished"
@@ -224,7 +225,7 @@ main()
 
     promptStepInfo "syncRepo ${vundleUri} ${vundlePath}"
 
-    promptStepInfo "setupVundle"
+    promptStepInfo "setupWithVundle ${workPath}/.vimrc"
 
     promptStepInfo "finalCheck"
 }
