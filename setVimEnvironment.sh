@@ -169,6 +169,7 @@ function createSymLinks()
     local targetPath="$2"
 
     lnIf "${sourcePath}/.vimrc"  "${targetPath}/.vimrc" 
+    lnIf "${sourcePath}/.vim"    "${targetPath}/.vim"
 }
 
 # Step 5:Sync Vundle plug-in
@@ -219,14 +220,13 @@ main()
 
     promptStepInfo "doBackUp "${HOME}/.vimrc"  "${HOME}/.vim""
 
-    promptStepInfo "syncRepo ${repoUri} ${workPath} ${repoName}"
+    promptStepInfo "syncRepo  ${workPath} ${repoUri} ${repoName}"
 
     promptStepInfo "createSymLinks "${workPath}" "${HOME}"" 
 
-    promptStepInfo "syncRepo ${vundleUri} ${vundlePath}"
+    promptStepInfo "syncRepo ${vundlePath} ${vundleUri} "Vundle""
 
     promptStepInfo "setupWithVundle ${workPath}/.vimrc"
 
     promptStepInfo "finalCheck"
 }
-
