@@ -9,9 +9,6 @@ fname=$(basename $0)
 scriptName=${fname%.*}
 logFile="${HOME}/.${scriptName}.log"
 
-vimrcfile="~/.vimrc"
-vimrcfileBackUp="~/.vimrc.${currentTime}"
-
 repoUri="https://github.com/Moresoph/change-vim.git"
 repoName="Moresoph-vim"
 
@@ -230,3 +227,4 @@ main()
 
     promptStepInfo "finalCheck"
 }
+main "$@"
