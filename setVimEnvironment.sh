@@ -198,7 +198,7 @@ function finalCheck()
 }
 
 # Used to call every step
-currentstep=0
+currentstep=1
 function promptStepInfo()
 {   
     ((currentstep++))
@@ -211,7 +211,7 @@ function promptStepInfo()
 
 main()
 {
-    promptStepInfo "createLogFile"         
+    createLogFile         
 
     promptStepInfo "preCheck"
 
