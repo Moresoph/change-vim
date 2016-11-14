@@ -333,7 +333,7 @@ function finalCheck()
     if [[ "${osPlatform}" == "ubuntu" ]]; then
         installPkg "vim-nox"
     fi
-    myPrintInfo "Use \"vim --version\" to check whether your vim supports \"lua\" ,if not ,google how to install vim with lua "  
+    myPrintInfo "Use \"vim --version |grep lua\" to check whether your vim supports \"lua\" ,if not ,google how to install vim with lua "  
 }
 
 # Used to call every step
