@@ -3,6 +3,18 @@
 ####### SETUP PARAMETERS
 currentTime="$(date "+%Y-%m-%d:%H:%M:%S")"
 
+# Get system information
+coreFileRhel="/etc/redhat-release"  
+coreFileCent="/etc/centos-release"  
+coreFileSuse="/etc/SuSE-release"  
+coreFileUbuntu="/etc/lsb-release"
+
+osPlatform=""           # OS platform,  red, centos, suse, ubuntu
+osVersion=""            # OS version
+osType=""               # legal value is workstation or server
+pkgManagement=""
+
+# All downloaded files will be put in this directory 
 workPath="$HOME/.Moresoph-vim"
 
 fname=$(basename $0)
@@ -11,6 +23,15 @@ logFile="${HOME}/.${scriptName}.log"
 
 repoUri="https://github.com/Moresoph/change-vim.git"
 repoName="Moresoph-vim"
+
+vundleUri="https://github.com/gmarik/vundle.git"
+vundlePath="${workPath}/bundle/Vundle.vim"
+vundleName="Vundle"
+
+# Common necessary programs list
+necessaryPro=("catags"\
+              "vim-nox")
+necessaryProNum=${#necessaryPro[@]}
 
 #
 # Create log file
@@ -75,9 +96,99 @@ function myPrintError()
     exit 1
 }
 
+#
+# Step 1:
+# Get system information
+# populate the following vairables:
+#    osPlatform
+#    osVersion
+#    osType
+#    pkgManagement
+#
+function getSysInfo()
+{
+    systemType="$(uname  -a |grep -i Ubuntu 2>&1)"
+    #Check Core file, checking sequence is rhel, cent, suse, ubuntu
+    if [[ -f $coreFileCent ]]; then 
+       osPlatform="$(cat $coreFileCent |cut -d ' ' -f1 |tr A-Z a-z  2>&1)"
+       if [[ "$?" -ne "0" || "$osPlatform" -ne "centos" ]]; then
+           myPrint "failed to get OS platform[Error]."
+           exit 1
+       fi
+      
+       # the contants of $coreFileCent may be 
+       # "CentOS release 6.8 (Final)"
+       # or "CentOS Linux release 7.2.1511 (Core)"
+       # we need to adjust the field  
+       num="$(cat $coreFileCent |wc -w 2>&1)"
+       num=`expr $num - 1` 
+       osVersion="$(cat $coreFileCent |cut -d ' ' -f$num |cut -d '.' -f1-2  2>&1)"
+       if [[ "$?" -ne "0" || -z "$osVersion" ]]; then
+           myPrint "failed to get OS version[Error]."
+           exit 1
+       fi
+
+       osType="" # all cent is one type
+      
+    elif [[ -f $coreFileRhel ]]; then
+       osPlatform="$(cat $coreFileRhel |cut -d ' ' -f1 |tr A-Z a-z  2>&1)"
+       if [[ "$?" -ne "0" || "$osPlatform" -ne "red" ]]; then
+           myPrint "failed to get OS platform[Error]."
+           exit 1
+       fi
+       osVersion="$(cat $coreFileRhel |cut -d ' ' -f7  2>&1)"
+       if [[ "$?" -ne "0" || -z "$osVersion" ]]; then
+           myPrint "failed to get OS version[Error]."
+           exit 1
+       fi
+
+       num="$(cat $coreFileRhel |grep -i server |wc -l 2>&1)"
+
+       if [[ "$num" -ne "0" ]]; then
+          osType="server"
+       else
+          osType="workstation"
+       fi
+ 
+    elif [[ -f $coreFileUbuntu  && -n "$systemType" ]]; then
+       osPlatform="$(cat $coreFileUbuntu |grep DISTRIB_ID |cut -d '=' -f2 |tr A-Z a-z  2>&1)"
+       if [[ "$?" -ne "0" || "$osPlatform" -ne "ubuntu" ]]; then
+           myPrint "failed to get OS platform[Error]."
+           exit 1
+       fi
+       osVersion="$(cat $coreFileUbuntu |grep DISTRIB_RELEASE |cut -d '=' -f2 |tr A-Z a-z  2>&1)" 
+       if [[ "$?" -ne "0" || -z "${osVersion}" ]]; then
+           myPrint "failed to get OS version[Error]."
+           exit 1
+       fi
+    elif [[ -f  $coreFileSuse ]]; then
+       myPrint "$scriptName does not support SUSE currently[Error]."
+       exit 1
+    fi 
+   
+    # Change all strings to be lower case
+    osPlatform=`tr '[A-Z]' '[a-z]' <<<"$osPlatform"`
+    osVersion=`tr '[A-Z]' '[a-z]' <<<"$osVersion"`
+    osType=`tr '[A-Z]' '[a-z]' <<<"$osType"`
+
+    # Set packagemanagement according to osPlatform
+    if [[ "${osPlatform}" == "red" || "${osPlatform}" == "centos" || "${osPlatform}" == "suse" ]]; then
+        pkgManagement="yum"
+    elif [[ "${osPlatform}" == "ubuntu" ]]; then
+        pkgManagement="apt"
+    else
+        pkgManagement="unknow"
+    fi
+
+    myPrintInfo "osPlatform=$osPlatform"
+    myPrintInfo "osVersion=$osVersion"
+    myPrintInfo "osType=$osType"    
+    myPrintInfo "pkgManagement=${pkgManagement}"
+
+}
 
 #
-# Step 1: Precheck to make sure this script can work well
+# Step 2: Precheck to make sure this script can work well
 #         
 function programExists()
 {
@@ -108,10 +219,12 @@ function preCheck()
     # check the necessary programs
     programMustExists vim
     programMustExists git
+
+    myPrintInfo "Everything is ok"
 }
 
 #
-# Step 2: Do backup
+# Step 3: Do backup
 #
 function doBackUp()
 {
@@ -123,18 +236,20 @@ function doBackUp()
             [[ "${ret}" == "1" ]] && myPrintError "Failed back up ${1}" 
         done
         myPrintInfo "Your original vim configuration has been backed up"
+    else
+        myPrintInfo "$1 and $2 do not exist, don't need to backup"
     fi
 }
 
 #
-# Step 3:Sync repository
+# Step 4:Sync repository
 #
 function syncRepo()
 {
     local repoPath="$1"    
     local repoUri="$2"
     local repoName="$3"
-    myPrintInfo "Trying to update ${repoName}"
+    myPrintInfo "Trying to clone or update ${repoName}"
     
     if [[ ! -e "${repoPath}" ]]; then
         mkdir -p "${repoPath}"
@@ -149,7 +264,7 @@ function syncRepo()
 }
 
 #
-# Step 4:Create symbolic links
+# Step 5:Create symbolic links
 #
 function lnIf()
 {
@@ -169,9 +284,9 @@ function createSymLinks()
     lnIf "${sourcePath}/.vim"    "${targetPath}/.vim"
 }
 
-# Step 5:Sync Vundle plug-in
-vundleUri="https://github.com/gmarik/vundle.git"
-vundlePath="$HOME/.vim/bundle/Vundle.vim"
+# Step :Sync Vundle plug-in
+#vundleUri="https://github.com/gmarik/vundle.git"
+#vundlePath="$HOME/.vim/bundle/Vundle.vim"
 
 # Step 6:Using Vundle plug-in management
 setupWithVundle()
@@ -192,26 +307,52 @@ setupWithVundle()
 }
 
 # Step 7:Make sure every plugins works well
+function installPkg()
+{
+    programExists "$1"
+    local ret="$?"
+    if [[ ${ret} -ne 0 ]]; then 
+        if [[ "${pkgManagement}" == "apt" ]]; then
+            sudo apt-get -y install $1 
+        elif [[ "${pkgManagement}" == "yum" ]]; then
+            sudo yum -y install $1  
+        else
+            myPrintWarning "pkgManagement is ${pkgManagement}, Not supported"
+        fi
+    fi
+}
+
 function finalCheck()
 {
-    myPrintInfo "Enter finalCheck , not finished yet"
+    myPrintInfo "This phases will use sudo command to install some necessary programs,so ensure that your account has sudo permissions"
+    local i=0
+    for((i=0;i<necessaryProNum;i++)); do
+        installPkg ${necessaryPro[$i]} 
+    done
+
+    if [[ "${osPlatform}" == "ubuntu" ]]; then
+        installPkg "vim-nox"
+    fi
+    myPrintInfo "Use \"vim --version\" to check whether your vim supports \"lua\" ,if not ,google how to install vim with lua "  
 }
 
 # Used to call every step
-currentstep=1
+currentstep=0
 function promptStepInfo()
 {   
-    ((currentstep++))
     local str=$(echo $1 |cut -d " " -f1)
     local strenter="Step ${currentstep} : ${str}"
     myPrintEnterLeave "${strenter}"
     $1
     myPrintEnterLeave "Step ${currentstep} : Finished"
+    ((currentstep++))
 }
 
 main()
 {
     createLogFile         
+
+    promptStepInfo "getSysInfo"
 
     promptStepInfo "preCheck"
 
@@ -219,12 +360,13 @@ main()
 
     promptStepInfo "syncRepo  ${workPath} ${repoUri} ${repoName}"
 
-    promptStepInfo "createSymLinks "${workPath}" "${HOME}"" 
+    promptStepInfo "syncRepo ${vundlePath} ${vundleUri} "${vundleName}""
 
-    promptStepInfo "syncRepo ${vundlePath} ${vundleUri} "Vundle""
+    promptStepInfo "createSymLinks "${workPath}" "${HOME}"" 
 
     promptStepInfo "setupWithVundle ${workPath}/.vimrc"
 
     promptStepInfo "finalCheck"
 }
 main "$@"
+
