@@ -25,12 +25,11 @@ repoUri="https://github.com/Moresoph/change-vim.git"
 repoName="Moresoph-vim"
 
 vundleUri="https://github.com/gmarik/vundle.git"
-vundlePath="${workPath}/bundle/Vundle.vim"
+vundlePath="${workPath}/.vim/bundle/Vundle.vim"
 vundleName="Vundle"
 
 # Common necessary programs list
-necessaryPro=("catags"\
-              "vim-nox")
+necessaryPro=("ctags")
 necessaryProNum=${#necessaryPro[@]}
 
 #
