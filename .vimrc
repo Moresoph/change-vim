@@ -162,6 +162,10 @@ Plugin 'Yggdroot/indentLine'
 let g:indentLine_setColors = 0
 
 
+" Plugin for golang
+Plugin 'fatih/vim-go'
+
+
 Plugin 'scrooloose/nerdtree'
 let NERDTreeWinPos  = 'right'
 let NERDTreeWinSize = 30
