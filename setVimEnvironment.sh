@@ -214,6 +214,7 @@ function preCheck()
 {
     # check the Environment variable
     [ -z "${HOME}" ] && myPrintError "You must have your HOME environmental variable set to continue"  
+    [ -z "${GOPATH}" ] && myPrintError "You must have your HOME environmental variable set to continue"  
 
     # check the necessary programs
     programMustExists vim
@@ -283,6 +284,12 @@ function createSymLinks()
     lnIf "${sourcePath}/.vim"    "${targetPath}/.vim"
 }
 
+function copyGoSrc() 
+{
+	cp -r ./src ${GOPATH}/
+}
+
+
 # Step :Sync Vundle plug-in
 #vundleUri="https://github.com/gmarik/vundle.git"
 #vundlePath="$HOME/.vim/bundle/Vundle.vim"
@@ -298,6 +305,7 @@ setupWithVundle()
         "+set nomore" \
         "+PluginInstall" \
         "+PluginClean" \
+        "+GoInstallBinaries" \
         "+qall"
 
     export SHELL="${system_shell}"
@@ -362,6 +370,8 @@ main()
     promptStepInfo "syncRepo ${vundlePath} ${vundleUri} "${vundleName}""
 
     promptStepInfo "createSymLinks "${workPath}" "${HOME}"" 
+
+    promptStepInfo "copyGoSrc"
 
     promptStepInfo "setupWithVundle ${workPath}/.vimrc"
 
