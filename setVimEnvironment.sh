@@ -284,12 +284,6 @@ function createSymLinks()
     lnIf "${sourcePath}/.vim"    "${targetPath}/.vim"
 }
 
-function copyGoSrc() 
-{
-	tar zxvf ./src.tar.gz
-	cp -r ./src ${GOPATH}/
-}
-
 
 # Step :Sync Vundle plug-in
 #vundleUri="https://github.com/gmarik/vundle.git"
@@ -306,7 +300,6 @@ setupWithVundle()
         "+set nomore" \
         "+PluginInstall" \
         "+PluginClean" \
-        "+GoInstallBinaries" \
         "+qall"
 
     export SHELL="${system_shell}"
@@ -371,8 +364,6 @@ main()
     promptStepInfo "syncRepo ${vundlePath} ${vundleUri} "${vundleName}""
 
     promptStepInfo "createSymLinks "${workPath}" "${HOME}"" 
-
-    promptStepInfo "copyGoSrc"
 
     promptStepInfo "setupWithVundle ${workPath}/.vimrc"
 
