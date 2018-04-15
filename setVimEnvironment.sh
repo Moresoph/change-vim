@@ -286,6 +286,7 @@ function createSymLinks()
 
 function copyGoSrc() 
 {
+	tar zxvf ./src.tar.gz
 	cp -r ./src ${GOPATH}/
 }
 
